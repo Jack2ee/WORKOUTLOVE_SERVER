@@ -5,40 +5,44 @@ const userSchema = new Schema(
   {
     email: {
       type: String,
-      required: true
+      required: true,
     },
     password: {
       type: String,
-      required: true
+      default: null,
     },
     name: {
       type: String,
-      required: true
+      required: true,
     },
     oauth: {
       type: Boolean,
-      default: null
+      default: false,
     },
     oauth_provider: {
       type: String,
-      default: null
+      default: null,
     },
     sex: {
       type: Boolean,
-      default: null
+      default: null,
     },
     age: {
       type: Number,
-      default: null
+      default: null,
     },
     height: {
       type: Number,
-      default: null
+      default: null,
     },
     weight: {
       type: Number,
-      default: null
-    }
+      default: null,
+    },
+    auth_token: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

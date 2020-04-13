@@ -10,8 +10,7 @@ const feedRoutes = require("./routes/feed");
 const authRoutes = require("./routes/auth");
 const routineRoutes = require("./routes/routine");
 
-const MONGODB_TEST_URL =
-  "mongodb+srv://jack2ee:eocn205904@workoutlove-jbnl2.mongodb.net/test";
+const MONGODB_TEST_URL = "mongodb://127.0.0.1:27017/test";
 
 app.use(bodyParser.json());
 app.use((req, res, next) => {
@@ -21,18 +20,22 @@ app.use((req, res, next) => {
     "OPTIONS, GET, POST, PUT, PATCH, DELETE"
   );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
 });
 
-app.use("/feed", feedRoutes);
+// app.use("/feed", feedRoutes);
 app.use("/auth", authRoutes);
-app.use("/routine", routineRoutes);
+// app.use("/routine", routineRoutes);
 
 app.use((error, req, res, next) => {
   console.log(error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;
-  res.status(status).join({ message: message, data: data });
+  res.status(status).json({ message: message, data: data });
 });
 
-mongoose.connect(MONGODB_TEST_URL).then(result => app.listen(8080));
+mongoose
+  .connect(MONGODB_TEST_URL)
+  .then((result) => app.listen(8080))
+  .catch((err) => console.log(err));
