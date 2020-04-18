@@ -9,6 +9,8 @@ const app = express();
 const feedRoutes = require("./routes/feed");
 const authRoutes = require("./routes/auth");
 const routineRoutes = require("./routes/routine");
+const myDailyWorkoutRoutes = require("./routes/myDailyWorkout");
+const adminRoutes = require("./routes/admin");
 
 const MONGODB_TEST_URL = "mongodb://127.0.0.1:27017/test";
 
@@ -23,12 +25,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.use("/feed", feedRoutes);
 app.use("/auth", authRoutes);
-// app.use("/routine", routineRoutes);
+app.use("/routines", routineRoutes);
+app.use("/my-daily-workouts", myDailyWorkoutRoutes);
+app.use("/admin", adminRoutes);
 
 app.use((error, req, res, next) => {
-  console.log(error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;

@@ -1,115 +1,144 @@
-const { validationResult } = require("express-validator");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const User = require("../models/user");
 
-exports.signupWithEmail = async (req, res, next) => {
-  const validationErrors = validationResult(req);
-  if (!validationErrors.isEmpty()) {
-    try {
-      const error = new Error("Validation Failed");
-      error.statusCode = 422;
-      error.data = validationErrors.array();
-      throw error;
-    } catch (error) {
-      if (!error.statusCode) {
-        error.statusCode = 500;
-      }
-      return next(error);
-    }
-  }
+const JWT_SECRET_KEY = "Workoutlove";
 
-  const email = req.body.email;
-  const password = req.body.password;
+exports.oauth = async (req, res, next) => {
+  const oauth = req.body.oauth;
+  const oauthProvider = req.body.oauthProvider;
   const name = req.body.name;
+  const profileImageUrl = req.body.profileImageUrl;
+  const thirdPartyId = req.body.thirdPartyId;
+  const accessToken = req.body.accessToken;
+  const refreshToken = req.body.refreshToken;
 
+  let loadedUser;
   try {
-    const existingUser = await User.findOne({ email: email });
-    if (existingUser) {
-      if (existingUser.oauth) {
-        return res.status(303).json({
-          message: `${existingUser.oauth_provider} 계정으로 가입한 이력이 있습니다.`,
-          oauth: existingUser.oauth,
-          oauthProvider: existingUser.oauth_provider,
-        });
-      }
-      return res.status(303).json({
-        message: "해당 매일은 가입된 이력이 있습니다.",
-        oauth: existingUser.oauth,
-        oauthProvider: existingUser.oauth_provider,
-      });
-    }
-    const saltRound = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRound);
-    const user = await new User({
-      email: email,
-      password: hashedPassword,
+    loadedUser = await User.findOne({
+      oauth: oauth,
+      oauthProvider: oauthProvider,
       name: name,
-    }).save();
-    return res
-      .status(200)
-      .json({ message: "축하합니다. 회원가입 되었습니다.", userId: user._id });
+      thirdPartyId: thirdPartyId,
+    });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
-    return next(err);
+    next(err);
+  }
+
+  let updatedUser;
+  if (loadedUser) {
+    try {
+      const authToken = await jwt.sign(
+        {
+          oauth: oauth,
+          oauthProvider: oauthProvider,
+          userId: loadedUser._id,
+          name: name,
+        },
+        JWT_SECRET_KEY,
+        { expiresIn: "24h" }
+      );
+      loadedUser.authToken = authToken;
+      updatedUser = await loadedUser.save();
+    } catch (err) {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+        err.message = "기존 유저의 토큰 값을 업데이트할 수 없습니다.";
+      }
+      next(err);
+    }
+  }
+  if (updatedUser) {
+    res.status(200).json({ data: { authToken: updatedUser.authToken } });
+  }
+
+  let newUser;
+  if (!loadedUser) {
+    try {
+      const newUserId = mongoose.Types.ObjectId();
+      const authToken = await jwt.sign(
+        {
+          oauth: oauth,
+          oauthProvider: oauthProvider,
+          userId: newUserId,
+          name: name,
+        },
+        JWT_SECRET_KEY,
+        { expiresIn: "24h" }
+      );
+      newUser = await new User({
+        _id: newUserId,
+        name: name,
+        profileImageUrl: profileImageUrl,
+        oauth: oauth,
+        oauthProvider: oauthProvider,
+        thirdPartyId: thirdPartyId,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        authToken: authToken,
+      }).save();
+    } catch (err) {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+        err.message = "유저를 생성할 수 없습니다.";
+      }
+      next(err);
+    }
+  }
+
+  if (newUser) {
+    res.status(201).json({ data: { authToken: newUser.authToken } });
   }
 };
 
-exports.signupWithOauth = async (req, res, next) => {};
+exports.updateUser = async (req, res, next) => {
+  const updatedContents = req.body.contents;
 
-exports.loginWithEmail = async (req, res, next) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  let loadedUser;
+  let updatedUser;
   try {
-    loadedUser = await User.findOne({ email: email });
-    if (!loadedUser) {
-      const error = new Error("가입하지 않은 메일입니다.");
-      error.statusCode = 401;
-      throw error;
-    } else {
-      if (loadedUser.oauth) {
-        return res.status(303).json({
-          message: `${loadedUser.oauth_provider} 계정으로 가입한 이력이 있습니다.`,
-          oauth: loadedUser.oauth,
-          oauthProvider: loadedUser.oauth_provider,
-        });
-      }
-    }
-
-    const rightPassword = await bcrypt.compare(password, loadedUser.password);
-    if (!rightPassword) {
-      const error = new Error("잘못된 비밀번호입니다.");
-      error.statusCode = 401;
-      throw error;
-    }
-    const auth_token = jwt.sign(
-      {
-        email: loadedUser.email,
-        oauth: loadedUser.oauth,
-        oauthProvider: loadedUser.oauth_provider,
-        userId: loadedUser._id,
-        name: loadedUser.name,
-      },
-      "Workoutlove",
-      { expiresIn: "24h" }
-    );
-    await User.updateOne(
-      { email: email },
-      {
-        auth_token: auth_token,
-      }
-    );
-    return res.status(200).json({ authToken: auth_token });
+    const userId = req.userId;
+    const user = await User.findOneAndUpdate({ _id: userId }, updatedContents, {
+      new: true,
+      useFindAndModify: true,
+    });
+    updatedUser = await user.save();
   } catch (err) {
     if (!err.statusCode) {
-      err.statusCode = 400;
+      err.statusCode = 401;
+      err.message = "유저 정보를 업데이트할 수 없습니다.";
     }
-    return next(err);
+    next(err);
+  }
+
+  if (updatedUser) {
+    res.status(200).json({
+      message: "회원정보 수정을 완료하였습니다.",
+      data: { user: updatedUser },
+    });
   }
 };
 
-exports.loginWithOauth = (req, res, next) => {};
+exports.deleteUser = async (req, res, next) => {
+  let deleteUser;
+  try {
+    const userId = req.userId;
+    deleteUser = await User.findOneAndRemove({ _id: userId });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      err.message = "유저를 찾을 수 없습니다.";
+    }
+    next(err);
+  }
+
+  if (deleteUser) {
+    res.status(200).json({
+      message: "회원 탈퇴를 완료했습니다.",
+      data: { authToken: null },
+    });
+  }
+};

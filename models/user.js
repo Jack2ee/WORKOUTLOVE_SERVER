@@ -3,23 +3,19 @@ const Schema = mongoose.Schema;
 
 const userSchema = new Schema(
   {
-    email: {
-      type: String,
-      required: true,
-    },
-    password: {
-      type: String,
-      default: null,
-    },
     name: {
       type: String,
       required: true,
+    },
+    profileImageUrl: {
+      type: String,
+      default: null,
     },
     oauth: {
       type: Boolean,
       default: false,
     },
-    oauth_provider: {
+    oauthProvider: {
       type: String,
       default: null,
     },
@@ -39,10 +35,56 @@ const userSchema = new Schema(
       type: Number,
       default: null,
     },
-    auth_token: {
+    authToken: {
       type: String,
       default: null,
     },
+    accessToken: {
+      type: String,
+      default: null,
+    },
+    refreshToken: {
+      type: String,
+      default: null,
+    },
+    thirdPartyId: {
+      type: Number,
+      default: null,
+    },
+    posts: {
+      type: Array,
+      ref: "Post",
+    },
+    routines: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Routine",
+      },
+    ],
+    dailyWorkouts: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "UserWorkout",
+      },
+    ],
+    workouts: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Workout",
+      },
+    ],
+    rooms: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Room",
+      },
+    ],
+    images: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Image",
+      },
+    ],
   },
   { timestamps: true }
 );

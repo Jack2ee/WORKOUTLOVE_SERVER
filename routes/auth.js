@@ -1,30 +1,17 @@
 const express = require("express");
-const { check } = require("express-validator");
 
 const authController = require("../controllers/auth");
+const isAuth = require("../middlewares/is-auth");
 
 const router = express.Router();
 
-router.put(
-  "/signup/email",
-  [
-    check("email")
-      .isEmail()
-      .withMessage("이메일 형식에 맞춰 입력해주세요.")
-      .normalizeEmail(),
-    check("password").trim().exists(),
-    check("passwordConfirmation", "비밀번호와 비밀번호 확인은 일치해야 합니다.")
-      .exists()
-      .custom((value, { req }) => value === req.body.password),
-    check("name").trim().exists(),
-  ],
-  authController.signupWithEmail
-);
+// POST /auth/oauth, BODY: {oauth, oauthProvider, name, profileImageUrl, thirdPartyId, accessToken, refreshToken}
+router.post("/oauth", authController.oauth);
 
-router.put("/signup/oauth", authController.signupWithOauth);
+// PUT /auth, HEADERS: `bearer ¢[authToken]`(AUTHORIZATION), BODY: contents
+router.put("/", isAuth, authController.updateUser);
 
-router.post("/login/email", authController.loginWithEmail);
-
-router.post("/login/oauth", authController.loginWithOauth);
+// DELETE /auth, HEADERS: `bearer ¢[authToken]`(AUTHORIZATION)
+router.delete("/", isAuth, authController.deleteUser);
 
 module.exports = router;
