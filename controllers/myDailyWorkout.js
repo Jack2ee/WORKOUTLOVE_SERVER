@@ -7,7 +7,6 @@ const WORKOUT_PER_CHUNK = 5;
 exports.getMyDailyWorkouts = async (req, res, next) => {
   const userId = req.userId;
   const chunk = req.params.chunk;
-
   let user;
   try {
     user = await User.findOne({ _id: userId });

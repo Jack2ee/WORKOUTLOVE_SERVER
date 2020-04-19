@@ -39,8 +39,8 @@ exports.oauth = async (req, res, next) => {
           userId: loadedUser._id,
           name: name,
         },
-        JWT_SECRET_KEY,
-        { expiresIn: "24h" }
+        JWT_SECRET_KEY
+        // { expiresIn: "24h" }
       );
       loadedUser.authToken = authToken;
       updatedUser = await loadedUser.save();
@@ -53,7 +53,10 @@ exports.oauth = async (req, res, next) => {
     }
   }
   if (updatedUser) {
-    res.status(200).json({ data: { authToken: updatedUser.authToken } });
+    res.status(200).json({
+      message: "기존 유저의 토큰 값을 업데이트하였습니다.",
+      authToken: updatedUser.authToken,
+    });
   }
 
   let newUser;
@@ -91,7 +94,34 @@ exports.oauth = async (req, res, next) => {
   }
 
   if (newUser) {
-    res.status(201).json({ data: { authToken: newUser.authToken } });
+    res.status(201).json({
+      message: "새로운 유저 생성을 완료하였습니다",
+      authToken: newUser.authToken,
+    });
+  }
+};
+
+exports.getUser = async (req, res, next) => {
+  const userId = req.userId;
+
+  let loadedUser;
+  try {
+    loadedUser = await User.findOne({ _id: userId });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      err.message = "유저를 찾을 수 없습니다.";
+    }
+    next(err);
+  }
+
+  if (loadedUser) {
+    res
+      .status(200)
+      .json({
+        message: "유저 정보를 성공적으로 로드하였습니다.",
+        user: loadedUser,
+      });
   }
 };
 
@@ -117,7 +147,7 @@ exports.updateUser = async (req, res, next) => {
   if (updatedUser) {
     res.status(200).json({
       message: "회원정보 수정을 완료하였습니다.",
-      data: { user: updatedUser },
+      user: updatedUser,
     });
   }
 };
@@ -138,7 +168,7 @@ exports.deleteUser = async (req, res, next) => {
   if (deleteUser) {
     res.status(200).json({
       message: "회원 탈퇴를 완료했습니다.",
-      data: { authToken: null },
+      authToken: null,
     });
   }
 };

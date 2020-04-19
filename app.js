@@ -10,6 +10,7 @@ const feedRoutes = require("./routes/feed");
 const authRoutes = require("./routes/auth");
 const routineRoutes = require("./routes/routine");
 const myDailyWorkoutRoutes = require("./routes/myDailyWorkout");
+const workoutRoutes = require("./routes/workout");
 const adminRoutes = require("./routes/admin");
 
 const MONGODB_TEST_URL = "mongodb://127.0.0.1:27017/test";
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 app.use("/auth", authRoutes);
 app.use("/routines", routineRoutes);
 app.use("/my-daily-workouts", myDailyWorkoutRoutes);
+app.use("/workouts", workoutRoutes);
 app.use("/admin", adminRoutes);
 
 app.use((error, req, res, next) => {

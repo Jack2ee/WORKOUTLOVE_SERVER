@@ -52,7 +52,30 @@ exports.createRoutine = async (req, res, next) => {
   if (updatedUserRoutines) {
     res.status(201).json({
       message: "루틴이 생성되었습니다.",
-      data: updatedUserRoutines.routines,
+      routines: updatedUserRoutines.routines,
+    });
+  }
+};
+
+exports.getAllRoutines = async (req, res, next) => {
+  let totalRoutineCount;
+  let allRoutines;
+  try {
+    allRoutines = await Routine.find();
+    totalRoutineCount = allRoutines.length;
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      err.message = "모든 루틴을 로드할 수 없습니다.";
+    }
+    next(err);
+  }
+
+  if (totalRoutineCount && allRoutines) {
+    res.status(200).json({
+      message: "모든 루틴을 로드하였습니다.",
+      totalRoutineCount: totalRoutineCount,
+      allRoutines: allRoutines,
     });
   }
 };
@@ -78,10 +101,8 @@ exports.getRoutines = async (req, res, next) => {
   if (totalRoutineCount && routineChunk) {
     res.status(200).json({
       message: `${chunk}그룹 루틴을 성공적으로 로드하였습니다.`,
-      data: {
-        totalRoutineCount: totalRoutineCount,
-        routineChunk: routineChunk,
-      },
+      totalRoutineCount: totalRoutineCount,
+      routineChunk: routineChunk,
     });
   }
 };
@@ -91,15 +112,18 @@ exports.getRoutine = async (req, res, next) => {
   let routine;
   try {
     routine = await Routine.findOne({ _id: routineId });
-    res
-      .status(200)
-      .json({ message: "루틴을 성공적으로 로드하였습니다.", data: routine });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
       err.message = `${routineId} 루틴을 로드할 수 없습니다.`;
     }
     next(err);
+  }
+
+  if (routine) {
+    res
+      .status(200)
+      .json({ message: "루틴을 성공적으로 로드하였습니다.", data: routine });
   }
 };
 
@@ -120,8 +144,10 @@ exports.getMyRoutines = async (req, res, next) => {
   }
 
   let myRoutines;
+  let myRoutineCount;
   try {
     myRoutines = await Routine.find({ _id: { $in: user.routines } });
+    myRoutineCount = myRoutines.length;
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -132,7 +158,8 @@ exports.getMyRoutines = async (req, res, next) => {
   if (user) {
     res.status(200).json({
       message: "내 루틴을 성공적으로 로드하였습니다.",
-      data: myRoutines,
+      myRoutines: myRoutines,
+      myRoutineCount: myRoutineCount,
     });
   }
 };
