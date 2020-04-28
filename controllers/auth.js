@@ -38,6 +38,7 @@ exports.oauth = async (req, res, next) => {
           oauthProvider: oauthProvider,
           userId: loadedUser._id,
           name: name,
+          profileImageUrl: loadedUser.profileImageUrl,
         },
         JWT_SECRET_KEY
         // { expiresIn: "24h" }
@@ -69,6 +70,7 @@ exports.oauth = async (req, res, next) => {
           oauthProvider: oauthProvider,
           userId: newUserId,
           name: name,
+          profileImageUrl: profileImageUrl,
         },
         JWT_SECRET_KEY,
         { expiresIn: "24h" }
@@ -116,12 +118,10 @@ exports.getUser = async (req, res, next) => {
   }
 
   if (loadedUser) {
-    res
-      .status(200)
-      .json({
-        message: "유저 정보를 성공적으로 로드하였습니다.",
-        user: loadedUser,
-      });
+    res.status(200).json({
+      message: "유저 정보를 성공적으로 로드하였습니다.",
+      user: loadedUser,
+    });
   }
 };
 

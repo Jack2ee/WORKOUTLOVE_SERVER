@@ -27,6 +27,7 @@ exports.createRoutine = async (req, res, next) => {
         createdBy: req.userId,
       }).save();
     } catch (err) {
+      console.log(err);
       if (!err.statusCode) {
         err.statusCode = 500;
         err.message = "루틴을 생성할 수 없습니다.";

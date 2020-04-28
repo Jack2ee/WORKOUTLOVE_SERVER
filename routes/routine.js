@@ -14,16 +14,16 @@ router.get("/all", routineController.getAllRoutines);
 // GET /routines/one/:routineId
 router.get("/one/:routineId", routineController.getRoutine);
 
-// GET /routines/my, HEADERS: `bearer ¢[authToken]`(AUTHORIZATION),
+// GET /routines/my, HEADERS: `bearer $[authToken]`(AUTHORIZATION),
 router.get("/my", isAuth, routineController.getMyRoutines);
 
 // POST /routines/, HEADERS: `bearer ${authToken}`(AUTHORIZATION), BODY: {contents: routineName, workouts}
 router.post("/", isAuth, routineController.createRoutine);
 
-// UPDATE /routines/my/:routineId, HEADERS: `bearer ¢[authToken]`(AUTHORIZATION), BODY: {contents: routineName, workouts}
+// UPDATE /routines/my/:routineId, HEADERS: `bearer $[authToken]`(AUTHORIZATION), BODY: {contents: routineName, workouts}
 router.put("/my/:routineId", isAuth, routineController.updateRoutine);
 
-// DELETE /routines/my/:routineId, HEADERS: `bearer ¢[authToken]`(AUTHORIZATION)
+// DELETE /routines/my/:routineId, HEADERS: `bearer $[authToken]`(AUTHORIZATION)
 router.delete("/my/:routineId", isAuth, routineController.deleteRoutine);
 
 module.exports = router;

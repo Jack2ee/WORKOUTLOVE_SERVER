@@ -14,32 +14,33 @@ module.exports = async (req, res, next) => {
 
   let authToken;
   try {
-    const AESbytes = await CryptoJS.AES.decrypt(
+    authToken = await CryptoJS.AES.decrypt(
       uglifiedToken,
       `${JWT_SECRET_KEY}`
-    );
-    authToken = await AESbytes.toString(CryptoJS.enc.Utf8);
+    ).toString(CryptoJS.enc.Utf8);
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = "토큰 바이트화에 실패하였습니다.";
     }
   }
 
-  let decodedToken;
+  let userId;
   if (authToken) {
     try {
-      decodedToken = await jwt.verify(authToken, JWT_SECRET_KEY);
+      const decodedToken = await jwt.verify(authToken, JWT_SECRET_KEY);
+      userId = decodedToken.userId;
     } catch (err) {
       err.statusCode = 500;
       throw err;
     }
-    if (!decodedToken) {
-      const error = new Error("권한이 없습니다.");
-      error.statusCode = 401;
-      throw error;
-    }
   }
 
-  req.userId = decodedToken.userId;
+  if (userId) {
+    req.userId = userId;
+  } else {
+    const error = new Error("권한이 없습니다.");
+    error.statusCode = 401;
+    throw error;
+  }
   next();
 };
